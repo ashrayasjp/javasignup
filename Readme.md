@@ -10,7 +10,7 @@ This is a simple Java Spring Boot project demonstrating user signup, login, and 
 - Basic CSS for styling
 
 ## How to Run
-1. Clone the repo.
+1. Clone the repository.
 2. Run the Spring Boot application.
 3. Access the signup page at `http://localhost:8080/users/signup`
 4. Login at `http://localhost:8080/users/login`
