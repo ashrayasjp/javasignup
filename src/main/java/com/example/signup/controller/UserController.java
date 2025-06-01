@@ -1,11 +1,10 @@
 package com.example.signup.controller;
 
 import com.example.signup.model.User;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-
-import jakarta.servlet.http.HttpSession;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,64 +19,82 @@ public class UserController {
     // Show signup form
     @GetMapping("/signup")
     public String showSignupForm() {
-        return "signup";  // src/main/resources/templates/signup.html
+        return "signup"; // signup.html
     }
 
-    // Process signup form submission
+    // Process signup form with password validation
     @PostMapping("/signup")
-    public String processSignup(@ModelAttribute User user) {
-        users.add(user);  // save user
-        return "redirect:/users/login";  // redirect to login after signup
+    public String processSignup(@ModelAttribute User user, Model model) {
+        String password = user.getPassword();
+
+        // Validate password
+        if (!isValidPassword(password)) {
+            model.addAttribute("error", "Password must contain at least one uppercase letter and one special character.");
+            return "signup";
+        }
+
+        // Check for duplicate username
+        boolean userExists = users.stream().anyMatch(u -> u.getUsername().equals(user.getUsername()));
+        if (userExists) {
+            model.addAttribute("error", "Username already taken.");
+            return "signup";
+        }
+
+        users.add(user);  // Save user
+        return "redirect:/users/login";
+    }
+
+    // Helper method to validate password
+    private boolean isValidPassword(String password) {
+        boolean hasUppercase = password.matches(".*[A-Z].*");
+        boolean hasSpecial = password.matches(".*[!@#$%^&*()_+\\-={}:;\"'<>?,./\\\\].*");
+        return hasUppercase && hasSpecial;
     }
 
     // Show login form
     @GetMapping("/login")
     public String showLoginForm() {
-        return "login";  // src/main/resources/templates/login.html
+        return "login"; // login.html
     }
 
-    // Process login form submission
+    // Process login
     @PostMapping("/login")
     public String processLogin(@RequestParam String username,
                                @RequestParam String password,
                                Model model,
                                HttpSession session) {
-        // Check if user exists and password matches
+
         User validUser = users.stream()
                 .filter(u -> u.getUsername().equals(username) && u.getPassword().equals(password))
                 .findFirst()
                 .orElse(null);
 
         if (validUser != null) {
-            // Store user in session
             session.setAttribute("loggedInUser", validUser);
-
-            // Add all users to model for dashboard view
             model.addAttribute("users", users);
-            return "users";  // dashboard page
+            return "users"; // dashboard
         } else {
             model.addAttribute("error", "Invalid username or password");
             return "login";
         }
     }
 
-    // Handle logout
+    // Logout
     @GetMapping("/logout")
     public String logout(HttpSession session) {
         session.invalidate();
         return "redirect:/users/login";
     }
 
-    // Show dashboard (only if logged in)
+    // Dashboard (GET)
     @GetMapping("/dash")
     public String showDashboard(HttpSession session, Model model) {
         User loggedInUser = (User) session.getAttribute("loggedInUser");
         if (loggedInUser == null) {
-            // Not logged in, redirect to login page
             return "redirect:/users/login";
         }
 
         model.addAttribute("users", users);
-        return "users";  // show dashboard
+        return "users"; // dashboard view
     }
 }

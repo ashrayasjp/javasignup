@@ -1,5 +1,3 @@
-@Autowired
-private UserRepository userRepository;
 package com.example.signup.repository;
 
 import com.example.signup.model.User;
